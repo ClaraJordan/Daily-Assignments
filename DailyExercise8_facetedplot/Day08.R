@@ -7,18 +7,18 @@
 # Question 1: Make a faceted plot of the cumulative cases & deaths by USA region. 
 # Your x axis should be the date and the y axis value/count.
 # To do this you will need to join and pivot the COVID-19 data.
-  # Instructions:
-    # 1A: Read in the COVID-19 data
-    # 1B: Create a new data.frame using the available state.abb, state.name, 
-    #     state.region objects in base R. Be intentional about creating a primary 
-    #     key to match to the COVID data!
-    # 1C: Join your new data.frame to the raw COVID data. 
-    #     Think about right, inner, left, or full join…
-    # 1D: split-apply the joined data to determine the daily, cumulative, 
-    #     cases and deaths for each region
-    # 1E: Pivot your data from wide format to long
-    # 1F: Plot your data in a compelling way (setup, layers, labels, facets, themes)
-    # 1G: Save the image to your img directory with a good file name and extension!
+# Instructions:
+# 1A: Read in the COVID-19 data
+# 1B: Create a new data.frame using the available state.abb, state.name, 
+#     state.region objects in base R. Be intentional about creating a primary 
+#     key to match to the COVID data!
+# 1C: Join your new data.frame to the raw COVID data. 
+#     Think about right, inner, left, or full join…
+# 1D: split-apply the joined data to determine the daily, cumulative, 
+#     cases and deaths for each region
+# 1E: Pivot your data from wide format to long
+# 1F: Plot your data in a compelling way (setup, layers, labels, facets, themes)
+# 1G: Save the image to your img directory with a good file name and extension!
 #
 ###### Code as follows: 
 
@@ -38,7 +38,7 @@ daily_cases <- joined_data |>
   arrange(region, date) |>  
   group_by(region, date) |>
   summarize(daily_cases = sum(cases))
-  
+
 # Finding the daily deaths for each region
 daily_deaths <- joined_data |>
   arrange(region, date) |>  
@@ -48,7 +48,7 @@ daily_deaths <- joined_data |>
 ###### Pivot Data
 daily_cases |>
   pivot_longer(cols = region)
-               
+
 ###### Plot Data
 joined_finaldata1 <- left_join(daily_cases, daily_deaths, by = "region", relationship = "many-to-many")
 
@@ -65,6 +65,6 @@ joined_finaldata1 |>
        y= "Cumulative Cases",  
        size = 12) +
   theme_light()
-  
+
 
 
