@@ -1,0 +1,80 @@
+---
+title: "Cjordan_DailyExercise5"
+author: "Clara Jordan"
+format: html
+editor: visual
+---
+
+# Attach the `palmerspenguins` package
+
+```{r}
+read.csv("~/Desktop/ESS 330/Daily Assignments/palmerspenguins.csv")
+```
+
+# 1. Examine at the dataset using the ?Help page
+
+# 2. what is the class of the penguins dataset?
+
+```{r}
+class("~/Desktop/ESS 330/Daily Assignments/palmerspenguins.csv")
+```
+
+Answer: character
+
+# 3. what is the structure of the penguins dataset?
+
+```{r}
+structure("palmerspenguins")
+```
+
+Answer: 344 x 8
+
+# 4. what are the dimensions of the penguins dataset?
+
+```{r}
+dim("palmerspenguins")
+```
+
+Answer: NULL
+
+# 5. what are the column names of the penguins dataset?
+
+Answer: species, island, bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g, sex, year.
+
+# 6. what type of data is `flipper_length_mm` and `Island`?
+
+```{r}
+typeof("flipper_length_mm")
+typeof("Island")
+```
+
+Answer: flipper_length_mm is of type "character," Island is of type "character."
+
+# 7. what is the mean flipper length of the penguins?
+
+```{r}
+as.logical("palmerspenguins$flipper_length_mm, na.rm =TRUE")
+mean("palmerspenguins$flipper_length_mm, na.rm =TRUE")
+```
+
+Answer: I can't get past this error so I did it in Excel to get 200.915 mm.
+
+# 8. what is the standard deviation of flipper length in the penguins?
+
+```{r}
+sd("palmerspenguins$flipper_length_mm, na.rm =TRUE")
+```
+
+Answer: I can't get past this error so I did it in Excel to get 14 mm.
+
+# 9. what is the median body mass of the penguins?
+
+```{r}
+median("palmerspenguins$flipper_length_mm, na.rm =TRUE")
+```
+
+Answer: I don't know how to get a difference answer so I did it in Excel to get 4050 g.
+
+# 10. what is the Island of the 100th penguin?
+
+Answer: Dream
