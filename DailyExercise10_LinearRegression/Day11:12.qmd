@@ -1,0 +1,212 @@
+---
+title: "Day11/12"
+author: "Clara Jordan"
+format: 
+  html:
+    self-contained: true
+editor: visual
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Installing and library packages. 
+
+library(tidyverse)
+library(tidymodels)
+library(visdat)
+library(broom)
+library(dplyr)
+library(recipes)
+library(lme4)
+library(ggplot2)
+install.packages("ggpubr", repos = "https://cran.rstudio.com/")
+library(ggpubr)
+```
+
+1.  Load the airquality dataset in R. What does this dataset represent? Explore its structure using functions like `str()` and `summary()`.
+
+```{r, eval = FALSE}
+?airquality 
+str(airquality)
+summary(airquality)
+
+# Highlights from the data set:
+  # Daily air quality measurements in New York, May to September 1973.
+  # A data frame with 153 observations on 6 variables.
+    # [,1]	Ozone	numeric	Ozone (ppb)
+    # [,2]	Solar.R	numeric	Solar R (lang)
+    # [,3]	Wind	numeric	Wind (mph)
+    # [,4]	Temp	numeric	Temperature (degrees F)
+    # [,5]	Month	numeric	Month (1--12)
+    # [,6]	Day	numeric	Day of month (1--31)
+# This data set represents air quality measurements taken in New York.
+```
+
+2.  Perform a Shapiro-Wilk normality test on the following variables: `Ozone`, `Temp`, `Solar.R`, and `Wind.`
+
+```{r, eval = FALSE}
+airquality <- na.omit(airquality)
+
+shapiro.test(airquality$Ozone)
+shapiro.test(airquality$Temp)
+shapiro.test(airquality$Solar.R)
+shapiro.test(airquality$Wind)
+```
+
+3.  What is the purpose of the Shapiro-Wilk test?
+
+```{r, eval = FALSE}
+# The Shapiro-Wilk test determines whether our data are normally distributed. 
+```
+
+4.  What are the null and alternative hypotheses for this test?
+
+```{r, eval = FALSE}
+# The null hypothesis is that our data are normally distributed. 
+# The alternative hypothesis is that our data are not normally distributed. 
+```
+
+5.  Interpret the p-values. Are these variables normally distributed?
+
+```{r, eval = FALSE}
+# p values indicate statistical significance if they are <0.05, and then we reject the null hypothesis. If they are >0.05 we fail to reject the null hypothesis. 
+
+# For Ozone: p-value = 2.846e-08. This variable is normally distributed. 
+
+# For Temperature: p-value = 0.09569. This variable is not normally distributed. 
+
+# For Solar Radiation: p-value = 2.957e-05. This variable is normally distributed. 
+
+# For Wind: p-value = 0.1099. This variable is not normally distributed.
+```
+
+6.  Create a new column with `case_when` tranlating the Months into four seasons (Winter (Nov, Dec, Jan), Spring (Feb, Mar, Apr), Summer (May, Jun, Jul), and Fall (Aug, Sep, Oct)).
+
+```{r, eval = FALSE}
+airquality <- airquality |>
+  mutate(Season = case_when(
+    Month %in% c(11, 12, 1) ~ "Winter",
+    Month %in% c(2, 3, 4) ~ "Spring",
+    Month %in% c(5, 6, 7) ~ "Summer",
+    Month %in% c(8, 9, 10) ~ "Fall"))
+```
+
+7.  Use `table` to figure out how many observations we have from each season.
+
+```{r, eval = FALSE}
+table(airquality$Season)
+
+# There are 52 observations from fall and 59 observations from winter. 
+```
+
+8.  Normalize the predictor variables (Temp, Solar.R, Wind, and Season) using a `recipe`
+
+```{r, eval = FALSE}
+# Creating the recipe: 
+recipe <- recipe(Ozone ~ Temp + Solar.R + Wind + Season, data = airquality) %>%
+  step_center(all_numeric()) %>%  
+  step_scale(all_numeric())
+```
+
+9.  What is the purpose of normalizing data?
+
+```{r, eval = FALSE}
+# We normalize data so that it's on a common scale and different variables can be easily compared. Without normalizing data our results can look skewed or misrepresent reality. 
+```
+
+10. What function can be used to impute missing values with the mean?
+
+```{r, eval = FALSE}
+# step_impute_mean() can impute missing values with the mean. 
+```
+
+11. `prep` and `bake` the data to generate a processed dataset.
+
+```{r, eval = FALSE}
+prep_recipe <- prep(recipe, training = airquality)
+processed_data <- bake(prep_recipe, new_data = airquality)
+```
+
+12. Why is it necessary to both `prep()` and `bake()` the recipe?
+
+```{r, eval = FALSE}
+# Prepping the recipe computes  the necessary information for preprocessing, such as means and standard deviations for scaling.
+# Baking the recipe applies these computations to the data, transforming it to our needs. 
+```
+
+13. Fit a linear model using Ozone as the response variable and all other variables as predictors. Remeber that the `.` notation can we used to include all variables.
+
+```{r, eval = FALSE}
+model <- lm(Ozone ~ ., data = airquality)
+```
+
+14. Interpret the model summary output (coefficients, R-squared, p-values) in plain language
+
+```{r, eval = FALSE}
+summary(model)
+
+# Model summary interpretation: 
+  # Coefficients: The coefficients for each variable (Solar.R, Wind, Temp, etc.) indicate their relationship to Ozone. For example, with every increase of 1 unit of wind, ozone will decrease by -3.3 units. 
+  # R-squared: R squared values indicate correlation between predictor and response variables in a model. The r squared for this model is 0.6. This means that there's a slight positive correlation between the predictor variables and ozone overall, but this isn't a very strong fit.
+  # p-values: The p-values indicate the significance of each predictor variable. For example, the p value for day is 0.2, so this variable does not have a statistically significant effect on ozone, but temperature does because it's p value is 1.71e-10. 
+```
+
+15. Use `broom::augment` to suppliment the normalized `data.frame` with the fitted values and residuals.
+
+```{r, eval = FALSE}
+augmented_data <- augment(model, normalized_data)
+```
+
+16. Extract the residuals and visualize their distribution as a histogram and qqplot.
+
+```{r, eval = FALSE}
+residuals <- augmented_data |>
+  select(.resid)
+
+# Plot histogram and qqplot
+par(mfrow = c(1, 2))  # Arrange plots side by side
+
+# Histogram
+residuals <- as.numeric(augmented_data$.resid)
+
+hist(residuals, main = "Residuals Histogram", xlab = "Residuals", col = "pink")
+
+# QQ plot
+qqnorm(residuals)
+qqline(residuals, col = "blue")
+```
+
+17. Use `ggarange` to plot this as one image and interpret what you see in them.
+
+```{r, eval = FALSE}
+hist_plot <- ggplot(data.frame(residuals), aes(x = residuals)) +
+  geom_histogram(fill = "pink", bins = 20) +
+  labs(title = "Residuals Histogram")
+
+qq_plot <- ggplot(data.frame(residuals), aes(sample = residuals)) +
+  geom_qq() +
+  geom_qq_line() +
+  labs(title = "QQ Plot of Residuals")
+
+ggarrange(hist_plot, qq_plot, ncol = 2, nrow = 1)
+
+# Interpretation: It looks like the histogram of the residuals is slightly right skewed, with a majority of the residuals lying around 0 and a few tailing off towards the right. This is reflected in the qq plot where most of the residuals are on the line but are tailing off as x gets larger. This means that our model is more accurate for smaller values but increasingly inaccurate as we increase the inputs. 
+```
+
+18. Create a scatter plot of actual vs. predicted values using ggpubr with the following setting:
+
+```{r, eval = FALSE}
+ggscatter(augmented_data, x = "Ozone", y = ".fitted",
+          add = "reg.line", conf.int = TRUE,
+          cor.coef = TRUE, cor.method = "spearman",
+          ellipse = TRUE)
+```
+
+19. How strong of a model do you think this is?
+
+```{r, eval = FALSE}
+# I think this model is pretty strong. We can see that most data points cluster around the line of best fit, and that our statistical values show strong correlation (r = 0.84) and very strong statistical significance (p < 2.2e-16). 
+```
+
+20. Render your document to HTML and submit to Canvas. 

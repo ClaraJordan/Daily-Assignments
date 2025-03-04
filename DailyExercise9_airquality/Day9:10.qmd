@@ -13,8 +13,8 @@ execute:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ### Load Packages
+
 ```{r, eval = FALSE}
 library(tidyverse)
 library(tidymodels)
@@ -24,6 +24,7 @@ library(broom)
 ```
 
 ### 1. Use the help (?) function to learn more about the dataset
+
 ```{r, message=FALSE, warning=FALSE}
 ?airquality 
 
@@ -39,6 +40,7 @@ library(broom)
 ```
 
 ### 2. Use vis_dat to check out the data. Does it need cleaning?
+
 ```{r, message=FALSE, warning=FALSE}
 library(visdat)
 
@@ -56,6 +58,7 @@ vis_miss(cleaned_data) # Check to see if there is missing data still.
 ```
 
 ### 3. Fit a linear model to the cleaned data to predict Ozone from one of the possible predictors of your choosing. Why did you chose that variable?
+
 ```{r, message=FALSE, warning=FALSE}
 model <- lm(Ozone ~ Solar.R, data = cleaned_data)
 
@@ -66,6 +69,7 @@ model <- lm(Ozone ~ Solar.R, data = cleaned_data)
 ```
 
 ### 4. Using summary(), Does this seem like a valid model?
+
 ```{r, message=FALSE, warning=FALSE}
 summary(model)
 
@@ -77,6 +81,7 @@ summary(model)
 ```
 
 ### 5. Explain the R2 found in a sentence.
+
 ```{r, message=FALSE, warning=FALSE}
   # Answer: The low R^2 value, 0.1213, indicates that there is 
   # very little relationship between Solar.R and Ozone, and very little of the 
@@ -84,6 +89,7 @@ summary(model)
 ```
 
 ### 6. Use broom::augment to predict the Ozone of the cleaned data.
+
 ```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(tidymodels)
@@ -95,6 +101,7 @@ head(augmented_data)
 ```
 
 ### 7. Use ggplot to plot the actual vs predicted Ozone
+
 ```{r, message=FALSE, warning=FALSE}
 correlation_value <- cor(augmented_data$Ozone, augmented_data$.fitted)
 subtitle_text <- paste("Correlation:", round(correlation_value, 2))
@@ -106,6 +113,3 @@ ggplot(augmented_data, aes(x = Ozone, y = .fitted)) +
        title = "Actual vs Predicted Ozone", 
        subtitle = subtitle_text)
 ```
-
-
-
