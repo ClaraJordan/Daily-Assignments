@@ -1,0 +1,101 @@
+---
+title: "DailyExercise5_Redo"
+author: "Clara Jordan"
+format:
+  html:
+    self-contained: true
+editor: visual
+execute:
+  echo: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Attach the `palmerspenguins` package
+
+```{r, message=FALSE, warning=FALSE}
+library(palmerpenguins)
+library(dplyr)
+```
+
+# 1. Examine at the dataset using the ?Help page
+
+```{r, message=FALSE, warning=FALSE}
+?palmerspenguins
+```
+
+# 2. what is the class of the penguins dataset?
+
+```{r, message=FALSE, warning=FALSE}
+palmerspenguins <- read.csv("palmerspenguins.csv")
+
+class(palmerspenguins)
+
+# Answer: The class is data.frame
+```
+
+# 3. what is the structure of the penguins dataset?
+
+```{r, message=FALSE, warning=FALSE}
+structure(palmerspenguins)
+
+# Answer: The structure is 344 rows x 8 columns 
+```
+
+# 4. what are the dimensions of the penguins dataset?
+
+```{r, message=FALSE, warning=FALSE}
+dim(palmerspenguins)
+
+# Answer: The dimensions are 344 rows and 8 columns
+```
+
+# 5. what are the column names of the penguins dataset?
+
+```{r, message=FALSE, warning=FALSE}
+# The column names are: species, island, bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g, sex, year.
+```
+
+# 6. what type of data is `flipper_length_mm` and `Island`?
+
+```{r, message=FALSE, warning=FALSE}
+typeof(palmerspenguins$flipper_length_mm)
+typeof(palmerspenguins$island)
+
+# Answer: flipper_length_mm is of type "double," Island is of type "character."
+```
+
+# 7. what is the mean flipper length of the penguins?
+
+```{r, message=FALSE, warning=FALSE}
+mean(palmerspenguins$flipper_length_mm, na.rm = TRUE)
+  
+# Answer: The mean of flipper length is 200.92 mm
+```
+
+# 8. what is the standard deviation of flipper length in the penguins?
+
+```{r, message=FALSE, warning=FALSE}
+sd(palmerspenguins$flipper_length_mm, na.rm = TRUE)
+
+# The standard deviation of flipper length is 14.06 mm
+```
+
+# 9. what is the median body mass of the penguins?
+
+```{r, message=FALSE, warning=FALSE}
+median(palmerspenguins$body_mass_g, na.rm = TRUE)
+
+# Answer: The median body mass is 4050 g
+```
+
+# 10. what is the Island of the 100th penguin?
+
+```{r, message=FALSE, warning=FALSE}
+head(palmerspenguins$island, n = 100, na.rm = TRUE)
+
+# Answer: Dream island. 
+```
+

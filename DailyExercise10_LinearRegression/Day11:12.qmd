@@ -209,4 +209,4 @@ ggscatter(augmented_data, x = "Ozone", y = ".fitted",
 # I think this model is pretty strong. We can see that most data points cluster around the line of best fit, and that our statistical values show strong correlation (r = 0.84) and very strong statistical significance (p < 2.2e-16). 
 ```
 
-20. Render your document to HTML and submit to Canvas. 
+20. Render your document to HTML and submit to Canvas.
