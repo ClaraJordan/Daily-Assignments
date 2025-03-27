@@ -1,9 +1,11 @@
 ---
 title: "Day11/12"
 author: "Clara Jordan"
-format: 
+format:
   html:
     self-contained: true
+execute:
+  echo: true
 editor: visual
 ---
 
@@ -126,6 +128,8 @@ recipe <- recipe(Ozone ~ Temp + Solar.R + Wind + Season, data = airquality) %>%
 ```{r, eval = FALSE}
 prep_recipe <- prep(recipe, training = airquality)
 processed_data <- bake(prep_recipe, new_data = airquality)
+
+normalized_data <- bake(prep_recipe, new_data = airquality)
 ```
 
 12. Why is it necessary to both `prep()` and `bake()` the recipe?
