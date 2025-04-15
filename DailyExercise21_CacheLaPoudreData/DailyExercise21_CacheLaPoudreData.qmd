@@ -1,0 +1,89 @@
+---
+title: "DailyExercise21_CacheLaPoudreData"
+author: "Clara Jordan"
+format:
+  html:
+    self-contained: true
+editor: visual
+---
+
+# Download Data
+```{r}
+library(dataRetrieval)
+library(tidyverse)
+library(tidymodels)
+library(dplyr)
+library(tsibble)
+
+# Example: Cache la Poudre River at Mouth (USGS site 06752260)
+poudre_flow <- readNWISdv(siteNumber = "06752260",    
+                          # Download data from USGS for site 06752260
+                          parameterCd = "00060",      
+                          # Parameter code 00060 = discharge in cfs)
+                          startDate = "2013-01-01",   
+                          # Set the start date
+                          endDate = "2023-12-31") |>
+  # Set the end date
+  renameNWISColumns() |>                              
+  # Rename columns to standard names (e.g., "Flow", "Date")
+  mutate(Date = yearmonth(Date)) |>                   
+  # Convert daily Date values into a year-month format (e.g., "2023 Jan")
+  group_by(Date) |>                                   
+  # Group the data by the new monthly Date
+  summarise(Flow = mean(Flow))
+  # Calculate the average daily flow for each month
+```
+
+# 1. Convert to tsibble
+```{r}
+# Convert to tsibble (monthly data, with Date as index)
+poudre_ts <- poudre_flow |> 
+  as_tsibble(index = Date)
+```
+
+# 2. Plotting the time series
+```{r}
+library(ggplot2)
+library(plotly)
+
+# Basic ggplot of flow over time
+p <- ggplot(poudre_ts, aes(x = Date, y = Flow)) +
+  geom_line(color = "blue") +
+  labs(title = "Monthly Average Streamflow - Cache la Poudre River",
+       y = "Flow (cfs)", x = "Date") +
+  theme_minimal()
+
+# Animate with plotly
+ggplotly(p)
+```
+
+# 3. Subseries
+```{r}
+library(feasts)
+
+# Subseries plot to show seasonal patterns
+poudre_ts |> 
+  gg_subseries(Flow)
+```
+
+# 4. Decompose
+```{r}
+library(fabletools)
+
+# STL decomposition with a seasonal window (say 13 months for annual seasonality)
+decomp <- poudre_ts |> 
+  model(STL(Flow ~ season(window = "periodic"))) |> 
+  components()
+
+# Plot the components
+autoplot(decomp)
+```
+
+
+
+
+
+
+
+
+
