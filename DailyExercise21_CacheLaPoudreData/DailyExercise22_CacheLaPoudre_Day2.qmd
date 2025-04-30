@@ -1,0 +1,201 @@
+---
+title: "DailyExercise22_CacheLaPoudre_Day2"
+author: "Clara Jordan"
+format:
+  html:
+    self-contained: true
+editor: visual
+---
+
+# Daily Exercise 21 
+
+## Download Data
+```{r}
+library(dataRetrieval)
+library(tidyverse)
+library(tidymodels)
+library(dplyr)
+library(tsibble)
+
+# Example: Cache la Poudre River at Mouth (USGS site 06752260)
+poudre_flow <- readNWISdv(siteNumber = "06752260",    
+                          # Download data from USGS for site 06752260
+                          parameterCd = "00060",      
+                          # Parameter code 00060 = discharge in cfs)
+                          startDate = "2013-01-01",   
+                          # Set the start date
+                          endDate = "2023-12-31") |>
+  # Set the end date
+  renameNWISColumns() |>                              
+  # Rename columns to standard names (e.g., "Flow", "Date")
+  mutate(Date = yearmonth(Date)) |>                   
+  # Convert daily Date values into a year-month format (e.g., "2023 Jan")
+  group_by(Date) |>                                   
+  # Group the data by the new monthly Date
+  summarise(Flow = mean(Flow))
+  # Calculate the average daily flow for each month
+```
+
+## 1. Convert to tsibble
+```{r}
+# Convert to tsibble (monthly data, with Date as index)
+poudre_ts <- poudre_flow |> 
+  as_tsibble(index = Date)
+```
+
+## 2. Plotting the time series
+```{r}
+library(ggplot2)
+library(plotly)
+
+# Basic ggplot of flow over time
+p <- ggplot(poudre_ts, aes(x = Date, y = Flow)) +
+  geom_line(color = "blue") +
+  labs(title = "Monthly Average Streamflow - Cache la Poudre River",
+       y = "Flow (cfs)", x = "Date") +
+  theme_minimal()
+
+# Animate with plotly
+ggplotly(p)
+```
+
+## 3. Subseries
+```{r}
+library(feasts)
+
+# Subseries plot to show seasonal patterns
+poudre_ts |> 
+  gg_subseries(Flow)
+```
+
+## 4. Decompose
+```{r}
+library(fabletools)
+
+# STL decomposition with a seasonal window (say 13 months for annual seasonality)
+decomp <- poudre_ts |> 
+  model(STL(Flow ~ season(window = "periodic"))) |> 
+  components()
+
+# Plot the components
+autoplot(decomp)
+```
+
+# Daily Exercise 22
+
+## 1. Use modeltime to forecast the next 12 months of streamflow data in the Poudre River based on last time assignment.
+```{r}
+library(modeltime)
+library(timetk)
+library(tidymodels)
+library(lubridate)
+
+# Make sure Date is a date object
+poudre_ts <- poudre_ts |>
+  mutate(Date = as.Date(Date)) 
+
+# Split data into training (all except last year)
+splits <- initial_time_split(poudre_ts, prop = 0.92)  # Approx. up to end of 2022
+
+# Check split
+training(splits) %>% tail()
+testing(splits) %>% head()
+
+```
+
+## 2. Use the prophet_reg(), and arima_reg() function to create a Prophet model for forecasting.
+```{r}
+library(parsnip)
+library(lubridate)
+library(dplyr)
+library(tidymodels)
+
+# Prophet model
+prophet_model <- prophet_reg() %>%
+  set_engine("prophet")
+
+# ARIMA model
+arima_model <- arima_reg() %>%
+  set_engine("auto_arima")
+
+# Fit models
+model_tbl <- modeltime_table(
+  fit(prophet_model, Flow ~ Date, data = training(splits)),
+  fit(arima_model, Flow ~ Date, data = training(splits))
+)
+
+```
+
+## 3. Use dataRetrieval to download daily streamflow for the next 12 months. Aggregate this data to monthly averages and compare it to the predictions made by your modeltime model.
+```{r}
+poudre_2024 <- readNWISdv(
+  siteNumber = "06752260",
+  parameterCd = "00060",
+  startDate = "2024-01-01",
+  endDate = "2024-12-31"
+) |> 
+  renameNWISColumns() |> 
+  mutate(Date = as.Date(Date)) |> 
+  mutate(Date = floor_date(Date, "month")) |> 
+  group_by(Date) |> 
+  summarise(Flow = mean(Flow, na.rm = TRUE), .groups = "drop") 
+
+poudre_2024 <- poudre_2024 %>%
+  rename(observed_cfs = Flow)
+
+# Refit models on full data
+refit_tbl <- model_tbl |>
+  modeltime_refit(poudre_ts)
+
+# Create 12 months of future dates
+last_date <- max(poudre_ts$Date)
+future_dates <- tibble(Date = seq.Date(from = last_date %m+% months(1), by = "month", length.out = 12))
+
+# Forecast future data (12 months)
+future_tbl <- testing(splits)
+
+forecast_tbl <- refit_tbl |>
+  modeltime_forecast(new_data = future_dates, actual_data = poudre_ts)
+
+# Aggregate forecasts to monthly means
+forecast_monthly <- forecast_tbl |>
+  filter(.key == "prediction") |>
+  mutate(month = floor_date(.index, "month")) |>
+  group_by(month) |>
+  summarise(predicted_cfs = mean(.value, na.rm = TRUE), .groups = "drop") |>
+  rename(Date = month)
+
+# RJoin observed and predicted data 
+comparison_tbl <- left_join(forecast_monthly, poudre_2024, by = "Date") |>
+  filter(!is.na(observed_cfs), !is.na(predicted_cfs))
+```
+
+## 4. Compute the R2 value between the model predictions and the observed data using a linear model and report the meaning.
+```{r}
+# Compute R2 using linear model
+if(nrow(comparison_tbl) > 1) {
+  r2_model <- lm(observed_cfs ~ predicted_cfs, data = comparison_tbl)
+  r2_value <- summary(r2_model)$r.squared
+  cat("R2 between predictions and observed values:", round(r2_value, 3), "\n")
+} else {
+  cat("Not enough overlapping data to compute R2 - check monthly alignment.\n")
+}
+```
+
+With this we can see that the R^2 value between predictions and observed values is 0.919. This indicates a strong positive correlation between actual and predicted values and that our model is reliable given the domain of this data. 
+
+## 5. Last, generate a plot of the Predicted vs Observed values and include a 1:1 line, and a linear model line.
+```{r}
+library(ggplot2)
+
+# Plot with 1:1 line and regression line
+ggplot(comparison_tbl, aes(x = observed_cfs, y = predicted_cfs)) +
+  geom_point(size = 2, color = "steelblue") +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray") +
+  geom_smooth(method = "lm", se = FALSE, color = "darkred") +
+  labs(title = "Predicted vs Observed Streamflow (2024)",
+       x = "Observed Flow (cfs)", y = "Predicted Flow (cfs)") +
+  theme_minimal()
+
+```
+

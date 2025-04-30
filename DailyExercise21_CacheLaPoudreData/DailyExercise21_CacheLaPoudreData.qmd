@@ -8,6 +8,7 @@ editor: visual
 ---
 
 # Download Data
+
 ```{r}
 library(dataRetrieval)
 library(tidyverse)
@@ -35,6 +36,7 @@ poudre_flow <- readNWISdv(siteNumber = "06752260",
 ```
 
 # 1. Convert to tsibble
+
 ```{r}
 # Convert to tsibble (monthly data, with Date as index)
 poudre_ts <- poudre_flow |> 
@@ -42,6 +44,7 @@ poudre_ts <- poudre_flow |>
 ```
 
 # 2. Plotting the time series
+
 ```{r}
 library(ggplot2)
 library(plotly)
@@ -58,6 +61,7 @@ ggplotly(p)
 ```
 
 # 3. Subseries
+
 ```{r}
 library(feasts)
 
@@ -67,6 +71,7 @@ poudre_ts |>
 ```
 
 # 4. Decompose
+
 ```{r}
 library(fabletools)
 
@@ -78,12 +83,3 @@ decomp <- poudre_ts |>
 # Plot the components
 autoplot(decomp)
 ```
-
-
-
-
-
-
-
-
-
